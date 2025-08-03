@@ -12,6 +12,7 @@ package me.him188.ani.app.data.repository.user
 import androidx.datastore.core.DataStore
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -180,8 +181,15 @@ class UserRepository(
     ) = withContext(Dispatchers.Default) {
         profileApi.invoke {
             try {
+                // openapi generator 生成的 OctetByteArray 有问题，改成 OutgoingContent
+                // 每次生成 API 都要把参数类型改成 OutgoingContent
+                // todo: write patch in build scripts.
                 this.uploadAvatar(
-                    me.him188.ani.client.infrastructure.OctetByteArray(avatar),
+                    object : OutgoingContent.ByteArrayContent() {
+                        override fun bytes(): ByteArray {
+                            return avatar
+                        }
+                    },
                 ).body()
 
                 UploadAvatarResult.SUCCESS
