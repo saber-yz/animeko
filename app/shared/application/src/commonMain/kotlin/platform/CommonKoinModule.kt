@@ -85,8 +85,6 @@ import me.him188.ani.app.domain.foundation.ServerListFeature
 import me.him188.ani.app.domain.foundation.ServerListFeatureConfig
 import me.him188.ani.app.domain.foundation.ServerListFeatureHandler
 import me.him188.ani.app.domain.foundation.UseAniTokenFeatureHandler
-import me.him188.ani.app.domain.foundation.UseBangumiTokenFeature
-import me.him188.ani.app.domain.foundation.UseBangumiTokenFeatureHandler
 import me.him188.ani.app.domain.foundation.UserAgentFeature
 import me.him188.ani.app.domain.foundation.UserAgentFeatureHandler
 import me.him188.ani.app.domain.foundation.get
@@ -159,12 +157,6 @@ private fun KoinApplication.otherModules(getContext: () -> Context, coroutineSco
             get(), coroutineScope,
             featureHandlers = listOf(
                 UserAgentFeatureHandler,
-                UseBangumiTokenFeatureHandler(
-                    sessionManager.accessTokenSessionFlow.map {
-                        it?.tokens?.bangumiAccessToken
-                    },
-                    onRefresh = { null }, // 不在请求时自动刷新. 我们 SessionManager 有自己维护刷新.
-                ),
                 UseAniTokenFeatureHandler(
                     sessionManager.accessTokenSessionFlow.map {
                         it?.tokens?.aniAccessToken
@@ -204,11 +196,6 @@ private fun KoinApplication.otherModules(getContext: () -> Context, coroutineSco
         BangumiClientImpl(
             get<HttpClientProvider>().get(
                 userAgent = ScopedHttpClientUserAgent.ANI,
-                useBangumiToken = true,
-            ),
-            get<HttpClientProvider>().get(
-                userAgent = ScopedHttpClientUserAgent.ANI,
-                useBangumiToken = false,
             ),
         )
     }
@@ -578,7 +565,6 @@ private fun holdingInstanceMatrixSequence() = sequence {
             HoldingInstanceMatrix(
                 setOf(
                     UserAgentFeature.withValue(userAgent),
-                    UseBangumiTokenFeature.withValue(false),
                     ServerListFeature.withValue(ServerListFeatureConfig.Default),
                     ConvertSendCountExceedExceptionFeature.withValue(true),
                 ),
@@ -590,7 +576,6 @@ private fun holdingInstanceMatrixSequence() = sequence {
         HoldingInstanceMatrix(
             setOf(
                 UserAgentFeature.withValue(ScopedHttpClientUserAgent.ANI),
-                UseBangumiTokenFeature.withValue(true),
                 ServerListFeature.withValue(ServerListFeatureConfig.Default),
                 ConvertSendCountExceedExceptionFeature.withValue(true),
             ),
