@@ -34,6 +34,7 @@ import me.him188.ani.client.infrastructure.HttpResponse
 import me.him188.ani.client.infrastructure.RequestConfig
 import me.him188.ani.client.infrastructure.RequestMethod
 import me.him188.ani.client.infrastructure.wrap
+import me.him188.ani.client.models.AniBangumiSyncStateEntity
 import me.him188.ani.client.models.AniBatchUpdateEpisodeCollectionsRequest
 import me.him188.ani.client.models.AniCollectionType
 import me.him188.ani.client.models.AniEpisodeCollection
@@ -154,6 +155,36 @@ open class SubjectsAniApi : ApiClient {
         ).wrap()
     }
 
+    /**
+     * 获取 Bangumi 全量同步状态
+     * 获取 Bangumi 全量同步状态
+     * @return AniBangumiSyncStateEntity
+     */
+    @Suppress("UNCHECKED_CAST")
+    open suspend fun getBangumiFullSyncState(): HttpResponse<AniBangumiSyncStateEntity> {
+
+        val localVariableAuthNames = listOf<String>("auth-jwt")
+
+        val localVariableBody =
+            io.ktor.client.utils.EmptyContent
+
+        val localVariableQuery = mutableMapOf<String, List<String>>()
+        val localVariableHeaders = mutableMapOf<String, String>()
+
+        val localVariableConfig = RequestConfig<kotlin.Any?>(
+            RequestMethod.GET,
+            "/v2/subjects/bangumi/full-sync/state",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+        )
+
+        return request(
+            localVariableConfig,
+            localVariableBody,
+            localVariableAuthNames
+        ).wrap()
+    }
 
     /**
      * 获取单个剧集信息. 如果已登录, 还会返回 collectionType 字段

@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import me.him188.ani.app.data.models.bangumi.BangumiSyncState
 import me.him188.ani.app.data.models.subject.CharacterInfo
 import me.him188.ani.app.data.models.subject.CharacterRole
 import me.him188.ani.app.data.models.subject.LightSubjectAndEpisodes
@@ -105,6 +106,8 @@ interface SubjectService {
      * 执行 Bangumi 全量同步, 从 Bangumi 同步到 ani
      */
     suspend fun performBangumiFullSync()
+
+    suspend fun getBangumiFullSyncState(): BangumiSyncState?
 }
 
 data class BatchSubjectCollection(
@@ -424,6 +427,13 @@ class RemoteSubjectService(
         sessionManager.checkAccessAniApiNow()
         subjectApi.invoke {
             bangumiFullSync().body()
+        }
+    }
+
+    override suspend fun getBangumiFullSyncState(): BangumiSyncState? {
+        return subjectApi.invoke {
+            val result = getBangumiFullSyncState().body()
+            result.value?.let { BangumiSyncState.fromRaw(it) }
         }
     }
 }
