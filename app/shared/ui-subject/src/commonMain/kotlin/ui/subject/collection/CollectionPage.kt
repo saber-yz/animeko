@@ -381,7 +381,7 @@ fun CollectionPage(
                 items.isLoadingFirstPageOrRefreshing,
                 onRefresh = { items.refresh() },
                 state = rememberPullToRefreshState(),
-                enabled = LocalPlatform.current.isMobile(),
+                enabled = LocalPlatform.current.isMobile() && !isBangumiSyncing,
             ) {
                 SubjectCollectionsColumn(
                     items,
