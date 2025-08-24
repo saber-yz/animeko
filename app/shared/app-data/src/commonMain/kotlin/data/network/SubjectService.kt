@@ -53,6 +53,8 @@ import me.him188.ani.datasources.bangumi.models.BangumiPerson
 import me.him188.ani.datasources.bangumi.models.BangumiSubjectCollectionType
 import me.him188.ani.datasources.bangumi.models.BangumiUserSubjectCollection
 import me.him188.ani.utils.coroutines.IO_
+import me.him188.ani.utils.coroutines.flows.FlowRestarter
+import me.him188.ani.utils.coroutines.flows.restartable
 import me.him188.ani.utils.ktor.ApiInvoker
 import me.him188.ani.utils.logging.logger
 import me.him188.ani.utils.platform.collections.associateWithTo
@@ -355,6 +357,7 @@ class RemoteSubjectService(
         }
     }
 
+    val subjectCountStatsRestarter = FlowRestarter()
 
     override suspend fun patchSubjectCollection(subjectId: Int, payload: AniUpdateSubjectCollectionRequest) {
         sessionManager.checkAccessAniApiNow()
@@ -367,6 +370,7 @@ class RemoteSubjectService(
                 Unit
             }
         }
+        subjectCountStatsRestarter.restart()
     }
 
     override suspend fun deleteSubjectCollection(subjectId: Int) {
@@ -374,13 +378,26 @@ class RemoteSubjectService(
         subjectApi {
             this.deleteSubjectCollection(subjectId.toLong()).body()
         }
+        subjectCountStatsRestarter.restart()
     }
 
     override fun subjectCollectionCountsFlow(): Flow<SubjectCollectionCounts> {
-        // TODO("subjectCollectionCountsFlow")
         return flow {
-            SubjectCollectionCounts(0, 0, 0, 0, 0, 0)
-        }
+            val stats = subjectApi {
+                this.getSubjectCollectionStats().body()
+            }
+
+            emit(
+                SubjectCollectionCounts(
+                    wish = stats.wish,
+                    doing = stats.doing,
+                    done = stats.done,
+                    onHold = stats.onHold,
+                    dropped = stats.dropped,
+                    total = stats.wish + stats.doing + stats.done + stats.onHold + stats.dropped,
+                ),
+            )
+        }.restartable(subjectCountStatsRestarter)
 //        return sessionManager.username.filterNotNull().map { username ->
 //            sessionManager.checkTokenNow()
 //            val types = UnifiedCollectionType.entries - UnifiedCollectionType.NOT_COLLECTED
