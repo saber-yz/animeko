@@ -414,7 +414,7 @@ fun CollectionPage(
         }
     }
 
-    if (showBangumiSyncStateDialog) {
+    if (showBangumiSyncStateDialog && isBangumiSyncing) {
         BangumiFullSyncStateDialog(
             state = state.fullSyncState,
             onDismissRequest = { showBangumiSyncStateDialog = false },
