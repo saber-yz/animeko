@@ -153,7 +153,6 @@ class UserCollectionsState(
     private val startSearch: (filterQuery: CollectionsFilterQuery) -> Flow<PagingData<SubjectCollectionInfo>>,
     collectionCountsState: State<SubjectCollectionCounts?>,
     val subjectProgressStateFactory: SubjectProgressStateFactory,
-    fullSyncState: State<BangumiSyncState?>,
     val createEditableSubjectCollectionTypeState: (subjectCollection: SubjectCollectionInfo) -> EditableSubjectCollectionTypeState,
     val onPagerFetchingAnyRemoteSource: (Boolean) -> Unit,
     private val backgroundScope: CoroutineScope,
@@ -164,8 +163,6 @@ class UserCollectionsState(
     private var currentQuery by mutableStateOf(defaultQuery)
 
     val selectedTypeIndex by derivedStateOf { availableTypes.indexOf(currentQuery.type) }
-
-    val fullSyncState by fullSyncState
 
     val collectionCounts: SubjectCollectionCounts? by collectionCountsState
     val tabRowScrollState = ScrollState(selectedTypeIndex)
@@ -256,6 +253,7 @@ class UserCollectionsState(
 fun CollectionPage(
     state: UserCollectionsState,
     selfInfo: SelfInfoUiState,
+    fullSyncState: BangumiSyncState?,
     onClickSearch: () -> Unit,
     onClickLogin: () -> Unit,
     onClickSettings: () -> Unit,
@@ -274,14 +272,12 @@ fun CollectionPage(
     val isCurrentPageRefreshing by remember {
         derivedStateOf { currentPageItems?.isLoadingFirstPageOrRefreshing == true }
     }
-    val isBangumiSyncing by remember {
-        derivedStateOf { state.fullSyncState != null && state.fullSyncState?.finished == false }
-    }
+    val isBangumiSyncing = fullSyncState != null && !fullSyncState.finished
 
     var showBangumiSyncStateDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(state.fullSyncState) {
-        if (state.fullSyncState == BangumiSyncState.Finished) {
+    LaunchedEffect(fullSyncState) {
+        if (fullSyncState is BangumiSyncState.Finished) {
             showBangumiSyncStateDialog = false
         }
     }
@@ -416,7 +412,7 @@ fun CollectionPage(
 
     if (showBangumiSyncStateDialog && isBangumiSyncing) {
         BangumiFullSyncStateDialog(
-            state = state.fullSyncState,
+            state = fullSyncState,
             onDismissRequest = { showBangumiSyncStateDialog = false },
         )
     }

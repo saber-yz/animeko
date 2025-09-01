@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,17 +29,14 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import me.him188.ani.app.data.models.bangumi.BangumiSyncCommand
 import me.him188.ani.app.data.models.bangumi.BangumiSyncOp
 import me.him188.ani.app.data.models.bangumi.BangumiSyncState
-import me.him188.ani.app.data.network.BangumiFullSyncStateResolver
 import me.him188.ani.app.data.repository.subject.BangumiSyncCommandRepository
 import me.him188.ani.app.data.repository.subject.SubjectCollectionRepository
 import me.him188.ani.app.ui.external.placeholder.placeholder
@@ -58,6 +54,7 @@ import me.him188.ani.client.models.AniCollectionType
 import me.him188.ani.client.models.AniEpisodeCollectionType
 import me.him188.ani.utils.coroutines.flows.FlowRestarter
 import me.him188.ani.utils.coroutines.flows.restartable
+import me.him188.ani.utils.logging.trace
 import me.him188.ani.utils.platform.Uuid
 import me.him188.ani.utils.platform.annotations.TestOnly
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -65,38 +62,34 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 @Stable
 class BangumiSyncTabViewModel() : AbstractViewModel(), KoinComponent {
     private val subjectCollectionRepository: SubjectCollectionRepository by inject()
     private val bangumiSyncCommandRepository: BangumiSyncCommandRepository by inject()
     private val flowRestarter = FlowRestarter()
-    private val fullSyncStateResolver by inject<BangumiFullSyncStateResolver>()
 
     val syncCommandsFlow: Flow<PagingData<BangumiSyncCommand>> =
         bangumiSyncCommandRepository.syncCommandsPager().cachedIn(backgroundScope).restartable(flowRestarter)
-    val syncState = fullSyncStateResolver.state
+
+    val syncState: MutableStateFlow<BangumiSyncState?> = MutableStateFlow(BangumiSyncState.Preparing)
 
     private fun restartSyncCommandsFlow() {
         flowRestarter.restart()
     }
 
     suspend fun fullSync() {
-        try {
-            subjectCollectionRepository.performBangumiFullSync()
-            fullSyncStateResolver.setChecking(true)
+        subjectCollectionRepository.performBangumiFullSync()
 
-            coroutineScope {
-                launch {
-                    fullSyncStateResolver.state.collectLatest {
-                        if (it != null && it.finished) {
-                            cancel()
-                        }
-                    }
-                }
+        while (true) {
+            delay(2.seconds)
+            val state = subjectCollectionRepository.getBangumiFullSyncState()
+            logger.trace { "Full sync state: $state" }
+            syncState.emit(state)
+            if (state is BangumiSyncState.Finished) {
+                break
             }
-        } finally {
-            fullSyncStateResolver.setChecking(false)
         }
         restartSyncCommandsFlow()
     }
@@ -113,7 +106,6 @@ fun BangumiSyncTab(
     modifier: Modifier = Modifier
 ) {
     val asyncHandler = rememberAsyncHandler()
-    val syncState by vm.syncState.collectAsState(null)
 
     BangumiSyncTabImpl(
         syncCommandsFlow = vm.syncCommandsFlow,

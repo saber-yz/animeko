@@ -41,6 +41,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import me.him188.ani.app.data.models.bangumi.BangumiSyncState
 import me.him188.ani.app.data.models.episode.EpisodeCollectionInfo
 import me.him188.ani.app.data.models.episode.EpisodeInfo
 import me.him188.ani.app.data.models.preference.NsfwMode
@@ -187,6 +188,8 @@ sealed class SubjectCollectionRepository(
     abstract suspend fun getSubjectNamesCnByCollectionType(types: List<UnifiedCollectionType>): Flow<List<String>>
 
     abstract suspend fun performBangumiFullSync()
+
+    abstract suspend fun getBangumiFullSyncState(): BangumiSyncState?
 }
 
 class SubjectCollectionRepositoryImpl(
@@ -566,6 +569,16 @@ class SubjectCollectionRepositoryImpl(
         try {
             withContext(defaultDispatcher) {
                 subjectService.performBangumiFullSync()
+            }
+        } catch (e: Exception) {
+            throw RepositoryException.wrapOrThrowCancellation(e)
+        }
+    }
+
+    override suspend fun getBangumiFullSyncState(): BangumiSyncState? {
+        return try {
+            withContext(defaultDispatcher) {
+                subjectService.getBangumiFullSyncState()
             }
         } catch (e: Exception) {
             throw RepositoryException.wrapOrThrowCancellation(e)
