@@ -259,8 +259,16 @@ class SubjectCollectionRepositoryImpl(
                             it.toEntity1(subjectId, lastFetched = lastFetched)
                         }
                         subjectCollectionDao.upsert(subjectEntity)
-                        episodeCollectionDao.deleteAllBySubjectId(subjectId) // 删除旧的剧集缓存, 因为服务器上可能会变少
+
+                        // 更新剧集列表
+                        val oldIds = episodeCollectionDao.listIdBySubjectId(subjectId).first().toMutableList()
                         episodeCollectionDao.upsert(episodeEntities)
+                        for (newEntity in episodeEntities) {
+                            oldIds.remove(newEntity.episodeId)
+                        }
+                        if (oldIds.isNotEmpty()) { // 删除本地存的多余的剧集 (通常没有)
+                            episodeCollectionDao.deleteAllByEpisodeIds(subjectId, oldIds)
+                        }
                     }
                     // TODO: 2025/5/24 handle subject not found 
                 }
