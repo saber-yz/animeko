@@ -149,7 +149,7 @@ fun BangumiSyncTabImpl(
             onClick = onFullSyncClick,
             onClickEnabled = !isBangumiSyncing,
             description = {
-                Text("将 Bangumi 的收藏数据下载到 Animeko 收藏服务。通常来说不需要进行这个操作，Animeko 能自动完成同步。仅在你有发现数据不一致的情况时才需要手动下载。此操作可能需要一分钟完成。请注意，每十分钟只能执行一次全量同步")
+                Text("将 Bangumi 的收藏数据下载到 Animeko 收藏服务。通常来说不需要进行这个操作，Animeko 能自动完成同步。仅在你有发现数据不一致的情况时才需要手动下载。此操作可能需要数分钟才能完成，在同步过程中其他功能不可用。请注意，每十分钟只能执行一次全量同步")
             },
         )
     }
