@@ -220,6 +220,7 @@ class UserCollectionsState(
         if (ms == null) {
             // 没有 remote mediator state, 说明没从 server 获取数据.
             remotePagingStates[typeIndex] = false
+            onPagerFetchingAnyRemoteSource(remotePagingStates.values.any { it })
             return
         }
         remotePagingStates.put(
