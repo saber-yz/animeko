@@ -29,11 +29,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun BangumiFullSyncStateDialog(
     state: BangumiSyncState?,
     onDismissRequest: () -> Unit,
-    confirmButton: @Composable () -> Unit = {
-        TextButton(onDismissRequest) {
-            Text("关闭")
-        }
-    },
 ) {
     AlertDialog(
         title = { Text("正在同步 Bangumi 收藏") },
@@ -47,11 +42,15 @@ fun BangumiFullSyncStateDialog(
                     LinearProgressIndicator({ 1f }, modifier = Modifier.fillMaxWidth())
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("此操作可能需要数分钟时间，请耐心等待")
+                Text("此操作可能需要数分钟时间，请耐心等待。在同步过程中，其他功能不可使用")
             }
         },
         onDismissRequest = onDismissRequest,
-        confirmButton = confirmButton,
+        confirmButton = {
+            TextButton(onDismissRequest) {
+                Text("在后台继续")
+            }
+        },
         properties = DialogProperties(dismissOnClickOutside = false),
     )
 }

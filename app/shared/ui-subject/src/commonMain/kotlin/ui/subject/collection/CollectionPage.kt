@@ -272,15 +272,8 @@ fun CollectionPage(
     val isCurrentPageRefreshing by remember {
         derivedStateOf { currentPageItems?.isLoadingFirstPageOrRefreshing == true }
     }
+    var hideBangumiSync by rememberSaveable { mutableStateOf(false) }
     val isBangumiSyncing = fullSyncState != null && !fullSyncState.finished
-
-    var showBangumiSyncStateDialog by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(fullSyncState) {
-        if (fullSyncState is BangumiSyncState.Finished) {
-            showBangumiSyncStateDialog = false
-        }
-    }
 
     // 如果有缓存, 列表区域要展示缓存, 错误就用图标放在角落
     CollectionPageLayout(
@@ -294,7 +287,7 @@ fun CollectionPage(
             }
         },
         actions = {
-            if (isBangumiSyncing) {
+            if (hideBangumiSync && isBangumiSyncing) {
                 val infiniteTransition = rememberInfiniteTransition(label = "rotation")
                 val angle by infiniteTransition.animateFloat(
                     initialValue = 0f,
@@ -306,10 +299,10 @@ fun CollectionPage(
                     label = "angle",
                 )
 
-                IconButton({ showBangumiSyncStateDialog = true }) {
+                IconButton({ hideBangumiSync = false }) {
                     Icon(
                         imageVector = Icons.Rounded.Sync,
-                        contentDescription = "Bangumi 同步中, 点击查看详情",
+                        contentDescription = "正在同步",
                         modifier = Modifier.rotate(angle),
                     )
                 }
@@ -410,10 +403,10 @@ fun CollectionPage(
         }
     }
 
-    if (showBangumiSyncStateDialog && isBangumiSyncing) {
+    if (!hideBangumiSync && isBangumiSyncing) {
         BangumiFullSyncStateDialog(
             state = fullSyncState,
-            onDismissRequest = { showBangumiSyncStateDialog = false },
+            onDismissRequest = { hideBangumiSync = true },
         )
     }
 }
