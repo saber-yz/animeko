@@ -82,7 +82,7 @@ class UserCollectionsViewModel : AbstractViewModel(), KoinComponent {
                     while (true) {
                         val state = subjectCollectionRepository.getBangumiFullSyncState()
                         fullSyncState.emit(state)
-                        delay(2.seconds)
+                        delay(1.seconds)
                     }
                 }
             }

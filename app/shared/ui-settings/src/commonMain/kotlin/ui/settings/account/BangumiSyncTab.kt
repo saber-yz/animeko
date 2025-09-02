@@ -83,13 +83,13 @@ class BangumiSyncTabViewModel() : AbstractViewModel(), KoinComponent {
         subjectCollectionRepository.performBangumiFullSync()
 
         while (true) {
-            delay(2.seconds)
             val state = subjectCollectionRepository.getBangumiFullSyncState()
             logger.trace { "Full sync state: $state" }
             syncState.emit(state)
             if (state is BangumiSyncState.Finished) {
                 break
             }
+            delay(1.seconds)
         }
         restartSyncCommandsFlow()
     }
