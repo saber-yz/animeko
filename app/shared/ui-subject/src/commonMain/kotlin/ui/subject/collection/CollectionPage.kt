@@ -71,6 +71,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -88,7 +89,6 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectWithLifecycle
 import kotlinx.coroutines.CoroutineScope
@@ -172,7 +172,10 @@ class UserCollectionsState(
     private val gridStates = mutableMapOf<Int, LazyGridState>()
 
     // Cache data flows for each tab
-    private val cachedLazyPagingItems = mutableMapOf<Int, LazyPagingItems<SubjectCollectionInfo>>()
+    private val cachedLazyPagingItems: MutableMap<Int, LazyPagingItems<SubjectCollectionInfo>> = mutableMapOf()
+    val selectedPageRefreshing by derivedStateOf {
+        cachedLazyPagingItems[selectedTypeIndex]?.isLoadingFirstPageOrRefreshing == true
+    }
 
     private val restarter = FlowRestarter()
 
@@ -185,6 +188,10 @@ class UserCollectionsState(
 
     fun selectTypeIndex(index: Int) {
         currentQuery = currentQuery.copy(type = availableTypes[index])
+    }
+
+    fun refreshSelectedPage() {
+        cachedLazyPagingItems[selectedTypeIndex]?.refresh()
     }
 
     @Suppress("INVISIBLE_REFERENCE")
@@ -206,7 +213,6 @@ class UserCollectionsState(
                     )
                     emitAll(startSearch(query))
                 }
-                .cachedIn(backgroundScope)
 
             LazyPagingItems(pagingFlow).apply {
                 addLoadStateListener { checkPagingState(typeIndex, it) }
@@ -266,15 +272,10 @@ fun CollectionPage(
 
     ) {
     val scope = rememberCoroutineScope()
-    var currentPageItems by remember {
-        mutableStateOf<LazyPagingItems<SubjectCollectionInfo>?>(null)
-    }
-
-    val isCurrentPageRefreshing by remember {
-        derivedStateOf { currentPageItems?.isLoadingFirstPageOrRefreshing == true }
-    }
     var hideBangumiSync by rememberSaveable { mutableStateOf(false) }
     val isBangumiSyncing = fullSyncState != null && !fullSyncState.finished
+
+    val selectedPageRefreshing by rememberUpdatedState(state.selectedPageRefreshing)
 
     // 如果有缓存, 列表区域要展示缓存, 错误就用图标放在角落
     CollectionPageLayout(
@@ -363,14 +364,13 @@ fun CollectionPage(
                 scrollState = state.tabRowScrollState,
             )
         },
-        isRefreshing = { isCurrentPageRefreshing || isBangumiSyncing },
-        onRefresh = { currentPageItems?.refresh() },
+        isRefreshing = { selectedPageRefreshing || isBangumiSyncing },
+        onRefresh = { state.refreshSelectedPage() },
         modifier,
         windowInsets,
     ) { nestedScrollConnection ->
         CollectionPageColumnLayout(
             state,
-            onCurrentPagingItemChange = { currentPageItems = it },
             modifier = Modifier.fillMaxSize(),
         ) { items, pageIndex ->
             PullToRefreshBox(
@@ -486,7 +486,6 @@ private fun CollectionPageLayout(
 @Composable
 private fun CollectionPageColumnLayout(
     state: UserCollectionsState,
-    onCurrentPagingItemChange: (LazyPagingItems<SubjectCollectionInfo>) -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (items: LazyPagingItems<SubjectCollectionInfo>, pageIndex: Int) -> Unit,
 ) {
@@ -509,12 +508,6 @@ private fun CollectionPageColumnLayout(
                 .getCollectionLazyPagingItems(pageIndex)
                 .collectWithLifecycle()
 
-            LaunchedEffect(state.selectedTypeIndex) {
-                if (pageIndex == state.selectedTypeIndex) {
-                    onCurrentPagingItemChange(items)
-                }
-            }
-
             Column(Modifier.fillMaxSize()) {
                 content(items, pageIndex)
             }
@@ -523,10 +516,6 @@ private fun CollectionPageColumnLayout(
         val items = remember(state.selectedTypeIndex) {
             state.getCollectionLazyPagingItems(state.selectedTypeIndex)
         }.collectWithLifecycle()
-
-        LaunchedEffect(items) {
-            onCurrentPagingItemChange(items)
-        }
 
         Box(modifier) {
             content(items, state.selectedTypeIndex)

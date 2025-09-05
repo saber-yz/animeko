@@ -12,7 +12,6 @@ package me.him188.ani.app.ui.subject.collection
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import me.him188.ani.app.data.models.bangumi.BangumiSyncState
 import me.him188.ani.app.data.models.preference.MyCollectionsSettings
 import me.him188.ani.app.data.models.subject.SubjectCollectionInfo
@@ -33,6 +31,7 @@ import me.him188.ani.app.domain.foundation.LoadError
 import me.him188.ani.app.domain.session.SessionEvent
 import me.him188.ani.app.domain.session.SessionStateProvider
 import me.him188.ani.app.navigation.AniNavigator
+import me.him188.ani.app.tools.MonoTasker
 import me.him188.ani.app.ui.foundation.AbstractViewModel
 import me.him188.ani.app.ui.foundation.launchInBackground
 import me.him188.ani.app.ui.subject.collection.components.EditableSubjectCollectionTypeState
@@ -66,7 +65,7 @@ class UserCollectionsViewModel : AbstractViewModel(), KoinComponent {
         .map { it.myCollections }
         .produceState(MyCollectionsSettings.Default)
 
-    private var fullSyncJob: Job? = null
+    private val fullSyncTasker = MonoTasker(backgroundScope)
     val fullSyncState: MutableStateFlow<BangumiSyncState?> = MutableStateFlow(null)
 
     val state = UserCollectionsState(
@@ -75,15 +74,16 @@ class UserCollectionsViewModel : AbstractViewModel(), KoinComponent {
         subjectProgressStateFactory,
         createEditableSubjectCollectionTypeState = { createEditableSubjectCollectionTypeState(it) },
         onPagerFetchingAnyRemoteSource = { enable ->
-            fullSyncJob?.cancel()
-            fullSyncJob = null
-            if (enable) {
-                fullSyncJob = backgroundScope.launch {
-                    while (true) {
-                        val state = subjectCollectionRepository.getBangumiFullSyncState()
-                        fullSyncState.emit(state)
-                        delay(1.seconds)
-                    }
+            if (!enable) {
+                fullSyncTasker.cancel()
+                return@UserCollectionsState
+            }
+
+            fullSyncTasker.launch {
+                while (true) {
+                    val state = subjectCollectionRepository.getBangumiFullSyncState()
+                    fullSyncState.emit(state)
+                    delay(1.seconds)
                 }
             }
         },
