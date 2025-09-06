@@ -71,7 +71,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -275,8 +274,6 @@ fun CollectionPage(
     var hideBangumiSync by rememberSaveable { mutableStateOf(false) }
     val isBangumiSyncing = fullSyncState != null && !fullSyncState.finished
 
-    val selectedPageRefreshing by rememberUpdatedState(state.selectedPageRefreshing)
-
     // 如果有缓存, 列表区域要展示缓存, 错误就用图标放在角落
     CollectionPageLayout(
         settingsIcon = {
@@ -364,7 +361,7 @@ fun CollectionPage(
                 scrollState = state.tabRowScrollState,
             )
         },
-        isRefreshing = { selectedPageRefreshing || isBangumiSyncing },
+        isRefreshing = { state.selectedPageRefreshing || isBangumiSyncing },
         onRefresh = { state.refreshSelectedPage() },
         modifier,
         windowInsets,
