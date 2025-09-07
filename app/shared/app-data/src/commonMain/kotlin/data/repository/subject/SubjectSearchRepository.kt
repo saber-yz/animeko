@@ -55,7 +55,7 @@ class SubjectSearchRepository(
         searchQuery: SubjectSearchQuery,
         useNewApi: suspend () -> Boolean = { false },
         ignoreDoneAndDropped: suspend () -> Boolean = { false },
-        pagingConfig: PagingConfig = Repository.defaultPagingConfig
+        pagingConfig: PagingConfig = bangumiSearchPagingConfig
     ): Flow<PagingData<BatchSubjectDetails>> = Pager(
         config = pagingConfig,
         initialKey = 0,
@@ -101,8 +101,8 @@ class SubjectSearchRepository(
 
                 // 在分页源中直接过滤掉不符合条件的数据 #2380
                 val subjectInfos = filterSubjectsBySort(
-                    subjectService.batchGetSubjectDetails(filteredIds), 
-                    searchQuery.sort
+                    subjectService.batchGetSubjectDetails(filteredIds),
+                    searchQuery.sort,
                 )
 
                 return@withContext LoadResult.Page(
@@ -149,7 +149,7 @@ class SubjectSearchRepository(
                 range.max?.let { "<${it}" },
             )
         }
-        
+
         /**
          * 将数据过滤从View提升到分页层，不然会导致 #2380
          */
@@ -225,6 +225,10 @@ class SubjectSearchRepository(
 
     private companion object {
         private val logger = logger<SubjectSearchRepository>()
+        private val bangumiSearchPagingConfig = PagingConfig(
+            pageSize = 20, // Bangumi API 实际最多返回 20 个结果 #2417
+            initialLoadSize = 20,
+        )
     }
 }
 
