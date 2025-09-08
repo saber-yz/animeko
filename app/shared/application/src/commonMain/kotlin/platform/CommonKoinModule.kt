@@ -70,6 +70,7 @@ import me.him188.ani.app.data.repository.subject.SubjectRelationsRepository
 import me.him188.ani.app.data.repository.subject.SubjectSearchHistoryRepository
 import me.him188.ani.app.data.repository.subject.SubjectSearchRepository
 import me.him188.ani.app.data.repository.torrent.peer.PeerFilterSubscriptionRepository
+import me.him188.ani.app.data.repository.user.AccessTokenSession
 import me.him188.ani.app.data.repository.user.PreferencesRepositoryImpl
 import me.him188.ani.app.data.repository.user.SettingsRepository
 import me.him188.ani.app.data.repository.user.TokenRepository
@@ -158,8 +159,8 @@ private fun KoinApplication.otherModules(getContext: () -> Context, coroutineSco
             featureHandlers = listOf(
                 UserAgentFeatureHandler,
                 UseAniTokenFeatureHandler(
-                    sessionManager.accessTokenSessionFlow.map {
-                        it?.tokens?.aniAccessToken
+                    sessionManager.sessionFlow.map {
+                        (it as? AccessTokenSession)?.tokens?.aniAccessToken
                     },
                     onRefresh = { null },
                 ),
@@ -500,13 +501,6 @@ fun KoinApplication.startCommonKoinModule(
         for (storage in manager.storagesIncludingDisabled) {
             if (!requiresMigration) storage.restorePersistedCaches()
         }
-    }
-
-    @Suppress("DEPRECATION")
-    coroutineScope.launch {
-        migrationCacheCompleted.await()
-        val migrationResult = SessionManager.migrateBangumiToken(koin)
-        SessionManager.migrationResult.complete(migrationResult)
     }
 
     coroutineScope.launch {
