@@ -442,6 +442,7 @@ class RemoteSubjectService(
         return localCounts
             .combine(remoteCounts) { local, remote -> remote ?: local }
             .onStart { emit(localCounts.first()) }
+            .flowOn(ioDispatcher)
             .restartable(subjectCountStatsRestarter)
     }
 
