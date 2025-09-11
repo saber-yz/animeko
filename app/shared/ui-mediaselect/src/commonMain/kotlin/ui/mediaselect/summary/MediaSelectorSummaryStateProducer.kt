@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
  * @see MediaSelectorSummary
  * @see me.him188.ani.app.domain.media.selector.MediaSelector.selectedMaybeExcludedMediaFlow
  */
-class MediaSelectorSummaryPresenter(
+class MediaSelectorSummaryStateProducer(
     selectedMaybeExcludedMediaFlow: Flow<MaybeExcludedMedia?>,
     mediaSourceResultsFlow: Flow<List<MediaSourceFetchResult>>,
     mediaSelectorSettingsFlow: Flow<MediaSelectorSettings>,
