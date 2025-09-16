@@ -25,11 +25,20 @@
 
 package me.him188.ani.client.apis
 
-import io.ktor.client.*
-import io.ktor.client.engine.*
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.HttpClientEngine
 import kotlinx.serialization.json.Json
-import me.him188.ani.client.infrastructure.*
-import me.him188.ani.client.models.*
+import me.him188.ani.client.infrastructure.ApiClient
+import me.him188.ani.client.infrastructure.HttpResponse
+import me.him188.ani.client.infrastructure.RequestConfig
+import me.him188.ani.client.infrastructure.RequestMethod
+import me.him188.ani.client.infrastructure.wrap
+import me.him188.ani.client.models.AniAnonymousBangumiUserToken
+import me.him188.ani.client.models.AniBangumiLoginRequest
+import me.him188.ani.client.models.AniBangumiLoginResponse
+import me.him188.ani.client.models.AniBangumiUserToken
+import me.him188.ani.client.models.AniRefreshBangumiTokenRequest
 
 open class BangumiOAuthAniApi : ApiClient {
 
