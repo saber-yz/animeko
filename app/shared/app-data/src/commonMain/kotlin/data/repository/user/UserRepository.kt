@@ -192,16 +192,26 @@ class UserRepository(
         }
     }
 
+    data class SendEmailOtpInfo(
+        val otpId: String,
+        val hasExistingUser: Boolean?,
+    )
+
     suspend fun sendEmailOtpForLogin(
         email: String,
-    ) = withContext(Dispatchers.Default) {
+    ): SendEmailOtpInfo = withContext(Dispatchers.Default) {
         authApi.invoke {
             try {
-                this.sendEmailOtp(
+                val resp = this.sendEmailOtp(
                     AniSendEmailOtpRequest(
                         email = email,
                     ),
-                ).body().otpId
+                ).body()
+
+                SendEmailOtpInfo(
+                    otpId = resp.otpId,
+                    hasExistingUser = resp.hasExistingUser,
+                )
             } catch (e: Exception) {
                 throw RepositoryException.wrapOrThrowCancellation(e)
             }
