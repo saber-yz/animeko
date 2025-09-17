@@ -268,7 +268,6 @@ private fun KoinApplication.otherModules(getContext: () -> Context, coroutineSco
             client,
             client.api,
             aniApiProvider.subjectApi,
-            database.subjectCollection(),
             sessionManager = get(),
         )
     }

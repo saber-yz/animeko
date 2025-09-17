@@ -19,16 +19,10 @@ import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -45,9 +39,6 @@ import me.him188.ani.app.data.models.subject.RelatedPersonInfo
 import me.him188.ani.app.data.models.subject.SelfRatingInfo
 import me.him188.ani.app.data.models.subject.SubjectCollectionCounts
 import me.him188.ani.app.data.models.subject.SubjectInfo
-import me.him188.ani.app.data.persistent.database.dao.SubjectCollectionDao
-import me.him188.ani.app.data.repository.RepositoryAuthorizationException
-import me.him188.ani.app.data.repository.RepositoryException
 import me.him188.ani.app.domain.search.SubjectType
 import me.him188.ani.app.domain.session.SessionStateProvider
 import me.him188.ani.app.domain.session.checkAccessAniApiNow
@@ -55,7 +46,6 @@ import me.him188.ani.client.apis.SubjectsAniApi
 import me.him188.ani.client.models.AniCollectionType
 import me.him188.ani.client.models.AniSubjectCollection
 import me.him188.ani.client.models.AniUpdateSubjectCollectionRequest
-import me.him188.ani.datasources.api.topic.UnifiedCollectionType
 import me.him188.ani.datasources.bangumi.BangumiClient
 import me.him188.ani.datasources.bangumi.apis.DefaultApi
 import me.him188.ani.datasources.bangumi.models.BangumiCount
@@ -64,11 +54,9 @@ import me.him188.ani.datasources.bangumi.models.BangumiSubjectCollectionType
 import me.him188.ani.datasources.bangumi.models.BangumiUserSubjectCollection
 import me.him188.ani.utils.coroutines.IO_
 import me.him188.ani.utils.coroutines.flows.FlowRestarter
-import me.him188.ani.utils.coroutines.flows.catching
 import me.him188.ani.utils.coroutines.flows.restartable
 import me.him188.ani.utils.ktor.ApiInvoker
 import me.him188.ani.utils.logging.logger
-import me.him188.ani.utils.logging.warn
 import me.him188.ani.utils.platform.collections.associateWithTo
 import org.koin.core.component.KoinComponent
 import kotlin.coroutines.CoroutineContext
@@ -147,7 +135,6 @@ class RemoteSubjectService(
     private val client: BangumiClient, // only used by GraphQL executor
     private val api: ApiInvoker<DefaultApi>,
     private val subjectApi: ApiInvoker<SubjectsAniApi>,
-    private val subjectCollectionDao: SubjectCollectionDao,
     private val sessionManager: SessionStateProvider,
     private val ioDispatcher: CoroutineContext = Dispatchers.IO_,
 ) : SubjectService, KoinComponent {
@@ -395,55 +382,44 @@ class RemoteSubjectService(
     }
 
     override fun subjectCollectionCountsFlow(): Flow<SubjectCollectionCounts> {
-        val localCounts = subjectCollectionDao
-            .subjectCountsByCollectionType(
-                UnifiedCollectionType.entries
-                    .toMutableList()
-                    .filterNot { it == UnifiedCollectionType.NOT_COLLECTED },
-            )
-            .map {
+        return flow {
+            val stats = subjectApi {
+                this.getSubjectCollectionStats().body()
+            }
+
+            emit(
                 SubjectCollectionCounts(
-                    wish = it.getOrElse(0) { 0 },
-                    doing = it.getOrElse(1) { 0 },
-                    done = it.getOrElse(2) { 0 },
-                    onHold = it.getOrElse(3) { 0 },
-                    dropped = it.getOrElse(4) { 0 },
-                    total = it.sum(),
-                )
-            }
-
-        val remoteCounts = suspend {
-            subjectApi { getSubjectCollectionStats().body() }
-        }
-            .asFlow()
-            .retryWhen { e, attempt ->
-                val wrapped = RepositoryException.wrapOrThrowCancellation(e)
-                (wrapped is RepositoryAuthorizationException && attempt < 3).also {
-                    if (it) {
-                        logger.warn(wrapped) { "Failed to get subject collection counts, retried $attempt, max retries: 3" }
-                        delay(500L)
-                    }
-                }
-            }
-            .catching()
-            .map { result ->
-                result.getOrNull()?.let { stats ->
-                    SubjectCollectionCounts(
-                        wish = stats.wish,
-                        doing = stats.doing,
-                        done = stats.done,
-                        onHold = stats.onHold,
-                        dropped = stats.dropped,
-                        total = stats.wish + stats.doing + stats.done + stats.onHold + stats.dropped,
-                    )
-                }
-            }
-
-        return localCounts
-            .combine(remoteCounts) { local, remote -> remote ?: local }
-            .onStart { emit(localCounts.first()) }
-            .flowOn(ioDispatcher)
-            .restartable(subjectCountStatsRestarter)
+                    wish = stats.wish,
+                    doing = stats.doing,
+                    done = stats.done,
+                    onHold = stats.onHold,
+                    dropped = stats.dropped,
+                    total = stats.wish + stats.doing + stats.done + stats.onHold + stats.dropped,
+                ),
+            )
+        }.restartable(subjectCountStatsRestarter)
+//        return sessionManager.username.filterNotNull().map { username ->
+//            sessionManager.checkTokenNow()
+//            val types = UnifiedCollectionType.entries - UnifiedCollectionType.NOT_COLLECTED
+//            val totals = IntArray(types.size) { type ->
+//                api {
+//                    getUserCollectionsByUsername(
+//                        username,
+//                        subjectType = BangumiSubjectType.Anime,
+//                        type = types[type].toSubjectCollectionType(),
+//                        limit = 1, // we only need the total count. API requires at least 1
+//                    ).body().total ?: 0
+//                }
+//            }
+//            SubjectCollectionCounts(
+//                wish = totals[UnifiedCollectionType.WISH.ordinal],
+//                doing = totals[UnifiedCollectionType.DOING.ordinal],
+//                done = totals[UnifiedCollectionType.DONE.ordinal],
+//                onHold = totals[UnifiedCollectionType.ON_HOLD.ordinal],
+//                dropped = totals[UnifiedCollectionType.DROPPED.ordinal],
+//                total = totals.sum(),
+//            )
+//        }.flowOn(ioDispatcher)
     }
 
     override fun subjectCollectionById(subjectId: Int): Flow<AniSubjectCollection?> {

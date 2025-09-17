@@ -274,24 +274,6 @@ interface SubjectCollectionDao {
         """,
     )
     fun subjectNamesCnByCollectionType(collectionTypes: List<UnifiedCollectionType>): Flow<List<String>>
-
-    @Query(
-        """
-        SELECT COUNT(*) 
-        FROM subject_collection 
-        WHERE collectionType IN (:collectionType)
-        GROUP BY collectionType
-        ORDER BY CASE collectionType
-            WHEN 'WISH' THEN 0
-            WHEN 'DOING' THEN 1
-            WHEN 'DONE' THEN 2
-            WHEN 'ON_HOLD' THEN 3
-            WHEN 'DROPPED' THEN 4
-            WHEN 'NOT_COLLECTED' THEN 5
-        END
-        """,
-    )
-    fun subjectCountsByCollectionType(collectionType: List<UnifiedCollectionType>): Flow<List<Int>>
 }
 
 suspend inline fun SubjectCollectionDao.deleteAll(type: UnifiedCollectionType?) {
