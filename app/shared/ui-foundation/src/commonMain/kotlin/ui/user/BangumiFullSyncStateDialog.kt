@@ -31,7 +31,7 @@ fun BangumiFullSyncStateDialog(
     onDismissRequest: () -> Unit,
 ) {
     AlertDialog(
-        title = { Text("正在同步 Bangumi 收藏") },
+        title = { Text("正在下载 Bangumi 收藏数据") },
         text = {
             Column {
                 Text(renderBangumiSyncState(state))
@@ -42,7 +42,7 @@ fun BangumiFullSyncStateDialog(
                     LinearProgressIndicator({ 1f }, modifier = Modifier.fillMaxWidth())
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("此操作可能需要数分钟时间，请耐心等待。在同步过程中，其他功能不可使用")
+                Text("此操作可能需要 5-15 分钟时间，请耐心等待。在下载过程中，你可以正常使用其他功能。可手动刷新收藏列表查看最新进度。")
             }
         },
         onDismissRequest = onDismissRequest,
