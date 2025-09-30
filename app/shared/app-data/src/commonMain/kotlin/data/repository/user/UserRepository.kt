@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import me.him188.ani.app.data.models.user.SelfInfo
 import me.him188.ani.app.data.repository.RepositoryAuthorizationException
 import me.him188.ani.app.data.repository.RepositoryException
+import me.him188.ani.app.data.repository.RepositoryRequestError
 import me.him188.ani.app.domain.session.AccessTokenPair
 import me.him188.ani.app.domain.session.InvalidSessionReason
 import me.him188.ani.app.domain.session.SessionManager
@@ -213,6 +214,15 @@ class UserRepository(
                     hasExistingUser = resp.hasExistingUser,
                 )
             } catch (e: Exception) {
+                if (e is ClientRequestException) {
+                    if (e.response.status == HttpStatusCode.UnprocessableEntity) {
+                        // 邮箱不正确
+                        throw RepositoryRequestError(
+                            localizedMessage = "邮箱格式不正确", // TODO: localize
+                            cause = e,
+                        )
+                    }
+                }
                 throw RepositoryException.wrapOrThrowCancellation(e)
             }
         }
