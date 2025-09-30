@@ -28,6 +28,7 @@ import me.him188.ani.app.data.models.preference.ThemeSettings
 import me.him188.ani.app.data.network.AniApiProvider
 import me.him188.ani.app.data.network.AniSubjectRelationIndexService
 import me.him188.ani.app.data.network.AnimeScheduleService
+import me.him188.ani.app.data.network.AutoSkipRepository
 import me.him188.ani.app.data.network.BangumiBangumiCommentServiceImpl
 import me.him188.ani.app.data.network.BangumiCommentService
 import me.him188.ani.app.data.network.BangumiProfileService
@@ -326,6 +327,7 @@ private fun KoinApplication.otherModules(getContext: () -> Context, coroutineSco
     single<AnimeScheduleService> { AnimeScheduleService(get<AniApiProvider>().scheduleApi) }
     single<TrendsRepository> { TrendsRepository(get<AniApiProvider>().trendsApi, get<BangumiClient>().nextTrendingApi) }
     single<RecommendationRepository> { RecommendationRepository(get<TrendsRepository>()) }
+    single<AutoSkipRepository> { AutoSkipRepository(get<AniApiProvider>().autoSkipApi) }
 
     single<DanmakuManager> {
         DanmakuManager(
