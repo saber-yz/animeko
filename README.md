@@ -1,10 +1,8 @@
+fork于https://github.com/open-ani/animeko/，仅用于学习，请支持原作者
 <div align="center">
 
 ![Animeko](https://socialify.git.ci/open-ani/animeko/image?description=1&descriptionEditable=%E9%9B%86%E6%89%BE%E7%95%AA%E3%80%81%E8%BF%BD%E7%95%AA%E3%80%81%E7%9C%8B%E7%95%AA%E7%9A%84%E4%B8%80%E7%AB%99%E5%BC%8F%E5%BC%B9%E5%B9%95%E8%BF%BD%E7%95%AA%E5%B9%B3%E5%8F%B0&font=Jost&logo=https%3A%2F%2Fraw.githubusercontent.com%2Fopen-ani%2Fanimeko%2Frefs%2Fheads%2Fmain%2F.github%2Fassets%2Flogo.png&name=1&owner=1&pattern=Plus&theme=Light)
 
-| 正式版                                                                                                                                                                          | 测试版                                                                                                                                                                                     | 讨论群                                                                                                                                                                                                                                                                                                                                                                                                           |
-|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [![Stable](https://img.shields.io/github/release/open-ani/ani.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/open-ani/ani/releases/latest) | [![Beta](https://img.shields.io/github/v/release/open-ani/ani.svg?maxAge=3600&label=Beta&labelColor=2c2c47&color=1c1c39&include_prereleases)](https://github.com/open-ani/ani/releases) | [![Group](https://img.shields.io/badge/Telegram-2CA5E0?style=flat-squeare&logo=telegram&logoColor=white)](https://t.me/openani) [![QQ](https://img.shields.io/badge/927170241-EB1923?logo=tencent-qq&logoColor=white)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=2EbZ0Qxe-fI_AHJLCMnSIOnqw-nfrFH5&authKey=L31zTMwfbMG0FhIgt8xNHGOFPHc531mSw2YzUVupHLRJ4L2f8xerAd%2ByNl4OigRK&noverify=0&group_code=927170241) |
 
 </div>
 
@@ -34,9 +32,6 @@ Animeko 支持云同步观看记录 ([Bangumi][Bangumi])、多视频数据源、
 
 > Animeko 曾用名 Ani，现在也简称 Ani。
 
-[立即下载](https://github.com/open-ani/animeko/releases/latest)
-
-https://github.com/user-attachments/assets/e63636c9-30b7-411c-aa6b-e5b78b900726
 
 ## 主要功能
 
@@ -103,35 +98,6 @@ https://github.com/user-attachments/assets/e63636c9-30b7-411c-aa6b-e5b78b900726
 | <img src=".readme/images/features/theme-settings.png" alt="" width="200"/> | <img src=".readme/images/features/media-preferences.png" alt="" width="200"/> |
 |:--------------------------------------------------------------------------:|:-----------------------------------------------------------------------------:|
 
-## 下载
-
-Animeko 支持所有主流平台：Android、iOS、Windows、macOS、Linux。
-
-- 稳定版本: 每两周更新, 功能稳定  
-  [下载稳定版本](https://github.com/open-ani/animeko/releases/latest)
-
-通常建议使用稳定版本. 如果你愿意参与测试并拥有一定的对 bug 的处理能力, 也欢迎使用测试版本更快体验新功能.
-具体版本类型可查看下方.
-
-- 测试版本: 每两天更新, 体验最新功能  
-  [下载测试版本](https://github.com/open-ani/animeko/releases)
-
-<details>
-<summary> <b>点击查看具体版本类型</b> </summary>
-
-Animeko 采用语义化版本号, 简单来说就是 `4.x.y` 的格式. 有以下几种版本类型:
-
-- 稳定版本:
-    - **新特性发布**: 当 `x` 更新时, 会有新特性的发布. 通常为 2 周一次.
-    - **Bug 修复**: 当 `y` 更新时, 只会有针对前个版本的重要的 bug 修复. 这些 Bug 修复版本穿插在新特性更新的间隔中,
-      时间不固定.
-- 在稳定版本的发布周期之间, 会发布测试版本:
-    - **Alpha 测试版**: 所有重大新功能都会首先发布到 `alpha` 测试通道, 客户端内可使用 "每日构建"
-      接收更新. 这些新功能非常不稳定, 适合热情的先锋测试员!
-    - **Beta 测试版**: 在功能经过 alpha 测试修复重大问题后, 会进入 `beta` 测试通道,
-      在客户端内名称为 "测试版". 此版本仍然不稳定, 是一个平衡新功能和稳定性的选择
-
-</details>
 
 ## 技术总览
 
@@ -145,11 +111,6 @@ Animeko 采用语义化版本号, 简单来说就是 `4.x.y` 的格式. 有以�
 - 高性能弹幕引擎，公益弹幕服务器 + 网络弹幕源；
 - 适配多平台的[视频播放器](https://github.com/open-ani/mediamp)，Android 底层为 [ExoPlayer][ExoPlayer]，PC 底层为 [VLC][VLC]；
 - 多类型数据源适配，内置 [动漫花园][dmhy]、[Mikan]，拥有强大的自定义数据源编辑器和自动数据源选择器。
-
-### 参与开发
-
-欢迎你提交 PR 参与开发，
-有关项目技术细节请参考 [CONTRIBUTING](docs/contributing/README.md)。
 
 ## FAQ
 
