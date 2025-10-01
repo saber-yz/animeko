@@ -21,13 +21,12 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import kotlinx.coroutines.launch
 import me.him188.ani.app.data.models.preference.MediaCacheSettings
 import me.him188.ani.app.platform.PermissionManager
+import me.him188.ani.app.ui.foundation.rememberAsyncHandler
 import me.him188.ani.app.ui.foundation.widgets.LocalToaster
 import me.him188.ani.app.ui.lang.Lang
 import me.him188.ani.app.ui.lang.settings_mediasource_rss_copied_to_clipboard
@@ -48,7 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 class CacheDirectoryGroupState(
     val mediaCacheSettingsState: SettingsState<MediaCacheSettings>,
     val permissionManager: PermissionManager,
-    val onGetBackupData: suspend () -> String?,
+    val onGetBackupData: suspend () -> String,
     val onRestoreSettings: suspend (String) -> Boolean,
 )
 
@@ -56,7 +55,7 @@ class CacheDirectoryGroupState(
 fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
     var showRestoreDialog by remember { mutableStateOf(false) }
 
-    val scope = rememberCoroutineScope()
+    val scope = rememberAsyncHandler()
     val clipboard = LocalClipboardManager.current
     val toaster = LocalToaster.current
 
@@ -68,12 +67,8 @@ fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
             onClick = {
                 scope.launch {
                     val data = state.onGetBackupData()
-                    if (data != null) {
-                        clipboard.setText(AnnotatedString(data))
-                        toaster.toast(copiedText)
-                    } else {
-                        toaster.toast(backupErrorText)
-                    }
+                    clipboard.setText(AnnotatedString(data))
+                    toaster.toast(copiedText)
                 }
             },
             title = { Text(stringResource(Lang.settings_storage_backup_op_backup_title)) },
