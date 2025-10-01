@@ -116,5 +116,4 @@ actual fun SettingsScope.CacheDirectoryGroup(state: CacheDirectoryGroupState) {
             },
         )
     }
-    BackupSettings(state)
 }

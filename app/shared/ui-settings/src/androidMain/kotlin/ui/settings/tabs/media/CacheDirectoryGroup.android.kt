@@ -14,5 +14,5 @@ import me.him188.ani.app.ui.settings.framework.components.SettingsScope
 
 @Composable
 actual fun SettingsScope.CacheDirectoryGroup(state: CacheDirectoryGroupState) {
-    BackupSettings(state)
+    // No storage settings on Android currently
 }

@@ -10,7 +10,7 @@
 package me.him188.ani.app.ui.settings.tabs.media
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -90,7 +90,7 @@ fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
 
         AlertDialog(
             { showRestoreDialog = false },
-            icon = { Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error) },
+            icon = { Icon(Icons.Rounded.ContentPaste, null, tint = MaterialTheme.colorScheme.error) },
             title = { Text(stringResource(Lang.settings_storage_backup_op_restore)) },
             text = { Text(stringResource(Lang.settings_storage_backup_op_restore_warning)) },
             confirmButton = {

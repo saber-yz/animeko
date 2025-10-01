@@ -28,6 +28,7 @@
     <string name="settings_tab_bt">BitTorrent</string>
     <string name="settings_tab_cache">Auto Cache</string>
     <string name="settings_tab_storage">Storage</string>
+    <string name="settings_tab_settings_backup">Settings Backup</string>
     <string name="settings_tab_log">Logs</string>
     <string name="settings_log_open_directory">Open log directory</string>
     <string name="settings_tab_update">App Updates</string>
