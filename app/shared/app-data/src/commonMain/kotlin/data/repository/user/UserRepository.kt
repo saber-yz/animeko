@@ -61,6 +61,7 @@ class UserRepository(
     private val userApi: ApiInvoker<UserAniApi>,
     private val authApi: ApiInvoker<UserAuthenticationAniApi>,
     private val profileApi: ApiInvoker<UserProfileAniApi>,
+    private val bangumiApi: ApiInvoker<me.him188.ani.client.apis.BangumiAniApi>,
     private val sessionManager: SessionManager,
     coroutineContext: CoroutineContext = Dispatchers.Default,
 ) {
@@ -285,6 +286,32 @@ class UserRepository(
             null
         }
         sessionManager.clearSession()
+    }
+
+    suspend fun unbindBangumi() = withContext(Dispatchers.Default) {
+        bangumiApi.invoke {
+            try {
+                val resp = this.unbind().body()
+
+                sessionManager.setSession(
+                    AccessTokenSession(
+                        AccessTokenPair(
+                            aniAccessToken = resp.tokens.accessToken,
+                            expiresAtMillis = resp.tokens.expiresAtMillis,
+                            bangumiAccessToken = resp.tokens.bangumiAccessToken,
+                        ),
+                    ),
+                    refreshToken = resp.tokens.refreshToken,
+                )
+
+                // update local self info cache
+                val self = resp.user.toSelfInfo()
+                dataStore.updateData { self }
+                selfInfoRefresher.restart()
+            } catch (e: Exception) {
+                throw RepositoryException.wrapOrThrowCancellation(e)
+            }
+        }
     }
 }
 
