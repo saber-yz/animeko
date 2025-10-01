@@ -12,19 +12,31 @@ package me.him188.ani.app.ui.settings
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import io.ktor.client.request.get
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import me.him188.ani.app.data.models.danmaku.DanmakuConfigSerializer
 import me.him188.ani.app.data.models.danmaku.DanmakuFilterConfig
+import me.him188.ani.app.data.models.preference.AnalyticsSettings
 import me.him188.ani.app.data.models.preference.AnitorrentConfig
 import me.him188.ani.app.data.models.preference.DanmakuSettings
 import me.him188.ani.app.data.models.preference.DebugSettings
 import me.him188.ani.app.data.models.preference.MediaCacheSettings
 import me.him188.ani.app.data.models.preference.MediaPreference
 import me.him188.ani.app.data.models.preference.MediaSelectorSettings
+import me.him188.ani.app.data.models.preference.OneshotActionConfig
+import me.him188.ani.app.data.models.preference.ProfileSettings
 import me.him188.ani.app.data.models.preference.ProxyMode
+import me.him188.ani.app.data.models.preference.ProxySettings
 import me.him188.ani.app.data.models.preference.ThemeSettings
+import me.him188.ani.app.data.models.preference.TorrentPeerConfig
 import me.him188.ani.app.data.models.preference.UISettings
 import me.him188.ani.app.data.models.preference.UpdateSettings
 import me.him188.ani.app.data.models.preference.VideoResolverSettings
@@ -34,6 +46,8 @@ import me.him188.ani.app.data.repository.media.MediaSourceInstanceRepository
 import me.him188.ani.app.data.repository.media.MediaSourceSubscriptionRepository
 import me.him188.ani.app.data.repository.player.DanmakuRegexFilterRepository
 import me.him188.ani.app.data.repository.user.SettingsRepository
+import me.him188.ani.app.data.repository.user.TokenRepository
+import me.him188.ani.app.data.repository.user.TokenSave
 import me.him188.ani.app.domain.foundation.HttpClientProvider
 import me.him188.ani.app.domain.foundation.get
 import me.him188.ani.app.domain.media.fetch.MediaSourceManager
@@ -71,10 +85,12 @@ import me.him188.ani.app.ui.settings.tabs.network.SystemProxyPresentation
 import me.him188.ani.app.ui.settings.tabs.network.toDataSettings
 import me.him188.ani.app.ui.settings.tabs.network.toUIConfig
 import me.him188.ani.app.ui.user.SelfInfoStateProducer
+import me.him188.ani.danmaku.ui.DanmakuConfig
 import me.him188.ani.datasources.api.source.ConnectionStatus
 import me.him188.ani.datasources.bangumi.BangumiClient
+import me.him188.ani.utils.coroutines.IO_
 import me.him188.ani.utils.coroutines.SingleTaskExecutor
-import me.him188.ani.utils.platform.currentPlatform
+import me.him188.ani.utils.logging.error
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -90,6 +106,8 @@ class SettingsViewModel : AbstractSettingsViewModel(), KoinComponent {
     private val mediaSourceSubscriptionUpdater: MediaSourceSubscriptionUpdater by inject()
     private val mediaSourceCodecManager: MediaSourceCodecManager by inject()
     private val clientProvider: HttpClientProvider by inject()
+    private val tokenRepository: TokenRepository by inject()
+
     private val proxyProvider = ProxySettingsFlowProxyProvider(settingsRepository.proxySettings.flow, backgroundScope)
 
     private val loopTasker = SingleTaskExecutor(backgroundScope.coroutineContext)
@@ -119,7 +137,16 @@ class SettingsViewModel : AbstractSettingsViewModel(), KoinComponent {
     val cacheDirectoryGroupState = CacheDirectoryGroupState(
         mediaCacheSettingsState,
         permissionManager,
-        showThisTab = currentPlatform() is me.him188.ani.utils.platform.Platform.Desktop,
+        onGetBackupData = {
+            withContext(Dispatchers.IO_) {
+                serializeSettingsBackup()
+            }
+        },
+        onRestoreSettings = {
+            withContext(Dispatchers.IO_) {
+                restoreSettingsBackup(it)
+            }
+        },
     )
 
     private val mediaSelectorSettingsState: SettingsState<MediaSelectorSettings> =
@@ -285,10 +312,79 @@ class SettingsViewModel : AbstractSettingsViewModel(), KoinComponent {
     val aboutTabInfo = AboutTabInfo(currentAniBuildConfig.versionName)
 
     val selfInfoFlow = SelfInfoStateProducer(koin = getKoin()).flow
-    
+
     suspend fun startProxyTesterLoop() {
         loopTasker.invoke {
             launch { proxyTester.testRunnerLoop() }
+        }
+    }
+
+    private suspend fun serializeSettingsBackup(): String? {
+        try {
+            val backup = SettingsBackup(
+                danmakuEnabled = settingsRepository.danmakuEnabled.flow.first(),
+                danmakuConfig = settingsRepository.danmakuConfig.flow.first(),
+                danmakuFilterConfig = settingsRepository.danmakuFilterConfig.flow.first(),
+                mediaSelectorSettings = settingsRepository.mediaSelectorSettings.flow.first(),
+                defaultMediaPreference = settingsRepository.defaultMediaPreference.flow.first(),
+                profileSettings = settingsRepository.profileSettings.flow.first(),
+                proxySettings = settingsRepository.proxySettings.flow.first(),
+                mediaCacheSettings = settingsRepository.mediaCacheSettings.flow.first(),
+                danmakuSettings = settingsRepository.danmakuSettings.flow.first(),
+                uiSettings = settingsRepository.uiSettings.flow.first(),
+                themeSettings = settingsRepository.themeSettings.flow.first(),
+                updateSettings = settingsRepository.updateSettings.flow.first(),
+                videoScaffoldConfig = settingsRepository.videoScaffoldConfig.flow.first(),
+                videoResolverSettings = settingsRepository.videoResolverSettings.flow.first(),
+                anitorrentConfig = settingsRepository.anitorrentConfig.flow.first(),
+                torrentPeerConfig = settingsRepository.torrentPeerConfig.flow.first(),
+                oneshotActionConfig = settingsRepository.oneshotActionConfig.flow.first(),
+                analyticsSettings = settingsRepository.analyticsSettings.flow.first(),
+                debugSettings = settingsRepository.debugSettings.flow.first(),
+                tokenStore = tokenRepository.getTokenSaveSnapshot(),
+            )
+
+            return Json.encodeToString(SettingsBackup.serializer(), backup)
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to backup settings data." }
+            return null
+        }
+    }
+
+    @Suppress("DuplicatedCode")
+    private suspend fun restoreSettingsBackup(content: String): Boolean {
+        try {
+            val backup = Json.decodeFromString(SettingsBackup.serializer(), content)
+
+            settingsRepository.danmakuEnabled.set(backup.danmakuEnabled)
+            settingsRepository.danmakuConfig.set(backup.danmakuConfig)
+            settingsRepository.danmakuFilterConfig.set(backup.danmakuFilterConfig)
+            settingsRepository.mediaSelectorSettings.set(backup.mediaSelectorSettings)
+            settingsRepository.defaultMediaPreference.set(backup.defaultMediaPreference)
+            settingsRepository.profileSettings.set(backup.profileSettings)
+            settingsRepository.proxySettings.set(backup.proxySettings)
+            settingsRepository.mediaCacheSettings.set(backup.mediaCacheSettings)
+            settingsRepository.danmakuSettings.set(backup.danmakuSettings)
+            settingsRepository.uiSettings.set(backup.uiSettings)
+            settingsRepository.themeSettings.set(backup.themeSettings)
+            settingsRepository.updateSettings.set(backup.updateSettings)
+            settingsRepository.videoScaffoldConfig.set(backup.videoScaffoldConfig)
+            settingsRepository.videoResolverSettings.set(backup.videoResolverSettings)
+            settingsRepository.anitorrentConfig.set(backup.anitorrentConfig)
+            settingsRepository.torrentPeerConfig.set(backup.torrentPeerConfig)
+            settingsRepository.oneshotActionConfig.set(backup.oneshotActionConfig)
+            settingsRepository.analyticsSettings.set(backup.analyticsSettings)
+            settingsRepository.debugSettings.set(backup.debugSettings)
+            tokenRepository.restoreFromTokenSave(backup.tokenStore)
+
+            return true
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to restore settings data." }
+            return false
         }
     }
 }
@@ -313,3 +409,27 @@ private fun Map<String, ServiceConnectionTester.TestState>.toUIState(): List<Pro
         }
     }
 }
+
+@Serializable
+private data class SettingsBackup(
+    val danmakuEnabled: Boolean,
+    @Serializable(with = DanmakuConfigSerializer::class) val danmakuConfig: DanmakuConfig,
+    val danmakuFilterConfig: DanmakuFilterConfig,
+    val mediaSelectorSettings: MediaSelectorSettings,
+    val defaultMediaPreference: MediaPreference,
+    val profileSettings: ProfileSettings,
+    val proxySettings: ProxySettings,
+    val mediaCacheSettings: MediaCacheSettings,
+    val danmakuSettings: DanmakuSettings,
+    val uiSettings: UISettings,
+    val themeSettings: ThemeSettings,
+    val updateSettings: UpdateSettings,
+    val videoScaffoldConfig: VideoScaffoldConfig,
+    val videoResolverSettings: VideoResolverSettings,
+    val anitorrentConfig: AnitorrentConfig,
+    val torrentPeerConfig: TorrentPeerConfig,
+    val oneshotActionConfig: OneshotActionConfig,
+    val analyticsSettings: AnalyticsSettings,
+    val debugSettings: DebugSettings,
+    val tokenStore: TokenSave
+)

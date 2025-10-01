@@ -233,9 +233,7 @@ fun SettingsScreen(
             Item(SettingsTab.PROXY)
             Item(SettingsTab.BT)
 //            Item(SettingsTab.CACHE)
-            if (vm.cacheDirectoryGroupState.showThisTab) {
-                Item(SettingsTab.STORAGE)
-            }
+            Item(SettingsTab.STORAGE)
 
             Title(stringResource(Lang.settings_category_others))
             Item(SettingsTab.UPDATE)
