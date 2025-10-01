@@ -29,11 +29,14 @@ import me.him188.ani.app.platform.PermissionManager
 import me.him188.ani.app.ui.foundation.rememberAsyncHandler
 import me.him188.ani.app.ui.foundation.widgets.LocalToaster
 import me.him188.ani.app.ui.lang.Lang
+import me.him188.ani.app.ui.lang.settings_danmaku_cancel
+import me.him188.ani.app.ui.lang.settings_danmaku_confirm
 import me.him188.ani.app.ui.lang.settings_mediasource_rss_copied_to_clipboard
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_backup_description
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_backup_error
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_backup_title
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_restore
+import me.him188.ani.app.ui.lang.settings_storage_backup_op_restore_description
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_restore_error
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_restore_succees
 import me.him188.ani.app.ui.lang.settings_storage_backup_op_restore_warning
@@ -77,7 +80,7 @@ fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
         TextItem(
             onClick = { showRestoreDialog = true },
             title = { Text(stringResource(Lang.settings_storage_backup_op_restore)) },
-            description = { Text(stringResource(Lang.settings_storage_backup_op_restore)) },
+            description = { Text(stringResource(Lang.settings_storage_backup_op_restore_description)) },
         )
     }
 
@@ -103,12 +106,12 @@ fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
                         }
                     },
                 ) {
-                    Text("确定", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Lang.settings_danmaku_confirm), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton({ showRestoreDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(Lang.settings_danmaku_cancel))
                 }
             },
         )
