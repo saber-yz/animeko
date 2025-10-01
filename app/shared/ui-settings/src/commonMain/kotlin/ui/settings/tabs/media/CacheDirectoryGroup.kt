@@ -41,6 +41,7 @@ import me.him188.ani.app.ui.lang.settings_storage_backup_title
 import me.him188.ani.app.ui.settings.framework.SettingsState
 import me.him188.ani.app.ui.settings.framework.components.SettingsScope
 import me.him188.ani.app.ui.settings.framework.components.TextItem
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -60,7 +61,6 @@ fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
     val toaster = LocalToaster.current
 
     Group({ Text(stringResource(Lang.settings_storage_backup_title)) }) {
-        val copiedText = stringResource(Lang.settings_mediasource_rss_copied_to_clipboard)
         val backupErrorText = stringResource(Lang.settings_storage_backup_op_backup_error)
 
         TextItem(
@@ -68,7 +68,7 @@ fun SettingsScope.BackupSettings(state: CacheDirectoryGroupState) {
                 scope.launch {
                     val data = state.onGetBackupData()
                     clipboard.setText(AnnotatedString(data))
-                    toaster.toast(copiedText)
+                    toaster.toast(getString(Lang.settings_mediasource_rss_copied_to_clipboard))
                 }
             },
             title = { Text(stringResource(Lang.settings_storage_backup_op_backup_title)) },

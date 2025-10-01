@@ -193,6 +193,14 @@
     <string name="settings_player_long_press_fast_forward_speed">长按快进速度</string>
     <string name="settings_player_long_press_fast_forward_speed_description">长按快进时的速度倍率</string>
 
+    <!-- Version Expired Overlay -->
+    <string name="settings_update_version_expired_title">版本过期</string>
+    <string name="settings_update_version_expired_message">当前版本太旧，为了你的使用体验，请更新到最新版本。\n右下角将会显示最新版本，可以点击自动更新。如果无法更新，请前往官网下载：</string>
+    <string name="settings_update_version_expired_message_with_latest">当前版本太旧，为了你的使用体验，请更新到最新版本 %1$s。\n右下角将会显示最新版本，可以点击自动更新。如果无法更新，请前往官网下载：</string>
+    <string name="settings_update_version_expired_import_settings_hint">如果新版本要求导入设置，请点击：</string>
+    <string name="settings_update_version_expired_copied_to_clipboard">已复制到剪贴板，请到新版本点击导入</string>
+    <string name="settings_update_version_expired_export_settings">导出设置</string>
+
     <!-- Storage Settings -->
     <string name="settings_storage_title">存储设置</string>
     <string name="settings_storage_bt_cache_location">BT 视频缓存位置</string>
